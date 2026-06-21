@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASM Conference '26 | Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+
+    <!-- PASSWORD PROMPT GATE -->
+    <div id="passwordGate" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 max-w-sm w-full rounded-2xl p-6 text-center">
+            <span class="text-3xl">🔒</span>
+            <h2 class="text-lg font-black text-white mt-2">Authorized Access Only</h2>
+            <p class="text-xs text-slate-400 mt-1 mb-5">Input administrative key to reveal ledger manifest.</p>
+            <input type="password" id="gateKey" placeholder="Enter Admin Password" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm text-center font-bold tracking-widest text-white mb-4">
+            <button onclick="checkGateKey()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider">Unlock Dashboard</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTROL ROOM PANEL -->
+    <div id="dashboardContent" class="hidden">
+        <header class="bg-slate-950 border-b border-slate-800 px-6 py-4 shadow-md">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="bg-blue-500 text-slate-950 text-[10px] font-extrabold px-2 py-1 rounded uppercase">Live Desk</span>
+                    <h1 class="font-black text-base tracking-tight">ASM Verification Control Center</h1>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 py-8">
+            <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-2xl">
+                <div class="mb-6">
+                    <h2 class="text-lg font-black text-white">Verification Queue & Manifest</h2>
+                    <p class="text-xs text-slate-400">Analyze submitted receipt slips against applicant profiles below to grant credential passes.</p>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950 text-slate-400 border-b border-slate-800 font-bold uppercase tracking-wider">
+                                <th class="p-4">Full Name / Phone</th>
+                                <th class="p-4">Archdeaconry / Parish</th>
+                                <th class="p-4">Access Tier</th>
+                                <th class="p-4">Proof Attachment</th>
+                                <th class="p-4 text-center">Status Action Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manifestTable" class="divide-y divide-slate-800/60 text-slate-300">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- POPUP VIEW FOR EXAMINING RECEIPTS INTERNALLY -->
+    <div id="receiptViewerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-950 border border-slate-800 max-w-lg w-full rounded-2xl p-4 flex flex-col items-center">
+            <div class="w-full flex justify-between items-center mb-3">
+                <h4 class="text-xs font-bold uppercase text-slate-400">Uploaded Slip Document Preview</h4>
+                <button onclick="closeReceiptViewer()" class="text-slate-400 hover:text-white font-bold text-sm">✕ Close</button>
+            </div>
+            <img id="modalReceiptTargetImg" src="" alt="Receipt Doc" class="max-h-[70vh] w-full object-contain rounded-lg border border-slate-800 bg-slate-900">
+        </div>
+    </div>
+
+    <script>
+        const MASTER_PASSWORD = 'ogbaru2026';
+
+        function checkGateKey() {
+            if(document.getElementById('gateKey').value === MASTER_PASSWORD) {
+                document.getElementById('passwordGate').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.remove('hidden');
+                loadManifest();
+            } else { alert('❌ Access Denied.'); }
+        }
+
+        async function loadManifest() {
+            try {
+                const response = await fetch('/api/attendees');
+                const attendees = await response.json();
+                const tableBody = document.getElementById('manifestTable');
+                tableBody.innerHTML = '';
+
+                if(attendees.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500 font-medium">Verification queue empty.</td></tr>`;
+                    return;
+                }
+
+                attendees.forEach(person => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/20 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-4">
+                            <div class="font-bold text-white text-sm">${person.fullName}</div>
+                            <div class="text-slate-400 text-[11px] mt-0.5">${person.phoneNumber}</div>
+                        </td>
+                        <td class="p-4">
+                            <div>${person.archdeaconry}</div>
+                            <div class="text-slate-400 text-[11px] mt-0.5">${person.homeChurch}</div>
+                        </td>
+                        <td class="p-4 font-semibold text-blue-400">${person.ticketType}</td>
+                        <td class="p-4">
+                            <button onclick="openReceiptViewer('${person.id}')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg border border-slate-700">
+                                🖼️ Open Receipt File
+                            </button>
+                        </td>
+                        <td class="p-4 text-center">
+                            ${person.approved ? 
+                                `<span class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-3 py-2 rounded-xl text-xs block">✓ Payment Confirmed</span>` : 
+                                `<button onclick="approveTransfer('${person.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md shadow-emerald-900/20 transition-all">
+                                    Approve Transfer Key
+                                 </button>`
+                            }
+                        </td>
+                    `;
+                    // Stash image data globally in memory attached to window context for instant recall
+                    window[`receipt_${person.id}`] = person.receiptImage;
+                    tableBody.appendChild(tr);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function openReceiptViewer(id) {
+            const base64Data = window[`receipt_${id}`];
+            if(base64Data) {
+                document.getElementById('modalReceiptTargetImg').src = base64Data;
+                document.getElementById('receiptViewerModal').classList.remove('hidden');
+            }
+        }
+
+        function closeReceiptViewer() { document.getElementById('receiptViewerModal').classList.add('hidden'); }
+
+        async function approveTransfer(id) {
+            try {
+                const response = await fetch(`/api/approve/${id}`, { method: 'POST' });
+                if(response.ok) {
+                    alert('🚀 Live Confirmation Dispatched!\nPayment verified and status locked down successfully.');
+                    loadManifest();
+                }
+            } catch (err) { alert('Error updating record.'); }
+        }
+    </script>
+</body>
+</html>
