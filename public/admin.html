@@ -3,150 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASM Conference '26 | Control Panel</title>
+    <title>ASM Admin Console Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Print Stylesheet override to make printing crisp and clean */
+        @media print {
+            body { background: white; color: black; }
+            .no-print { display: none !important; }
+            .print-container { width: 100%; max-width: 100%; padding: 0; box-shadow: none; border: none; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #cbd5e1 !important; padding: 8px !important; text-align: left !important; font-size: 12px !important; }
+            th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-slate-900 text-slate-100 min-h-screen antialiased p-4 md:p-8">
 
-    <!-- PASSWORD PROMPT GATE -->
-    <div id="passwordGate" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 max-w-sm w-full rounded-2xl p-6 text-center">
-            <span class="text-3xl">🔒</span>
-            <h2 class="text-lg font-black text-white mt-2">Authorized Access Only</h2>
-            <p class="text-xs text-slate-400 mt-1 mb-5">Input administrative key to reveal ledger manifest.</p>
-            <input type="password" id="gateKey" placeholder="Enter Admin Password" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl focus:outline-none focus:border-blue-500 text-sm text-center font-bold tracking-widest text-white mb-4">
-            <button onclick="checkGateKey()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider">Unlock Dashboard</button>
+    <div class="max-w-7xl mx-auto print-container">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-slate-800 pb-6 no-print">
+            <div>
+                <span class="text-xs font-bold text-blue-400 uppercase tracking-widest">ASM 2026 Portal Control Room</span>
+                <h1 class="text-3xl font-black tracking-tight mt-1">Registrations Live Manifest</h1>
+            </div>
+            
+            <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-3 rounded-xl text-sm flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-emerald-900/20">
+                🖨️ Print Entire Manifest
+            </button>
         </div>
-    </div>
 
-    <!-- MAIN CONTROL ROOM PANEL -->
-    <div id="dashboardContent" class="hidden">
-        <header class="bg-slate-950 border-b border-slate-800 px-6 py-4 shadow-md">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <span class="bg-blue-500 text-slate-950 text-[10px] font-extrabold px-2 py-1 rounded uppercase">Live Desk</span>
-                    <h1 class="font-black text-base tracking-tight">ASM Verification Control Center</h1>
-                </div>
+        <div class="hidden print:block mb-6">
+            <h1 style="font-size: 24px; font-weight: 800; color: black; text-align: center;">DIOCESE OF OGBARU ANGLICAN STUDENT CONFERENCE (ASM 2026)</h1>
+            <p style="font-size: 14px; text-align: center; color: #475569; margin-top: 4px;">Official Delegate Manifest Ledger List</p>
+            <hr style="margin-top: 12px; border-color: #cbd5e1;">
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl print:bg-white print:border-none">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900/50 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400 print:text-black">
+                            <th class="px-6 py-4">Reg Number</th>
+                            <th class="px-6 py-4">Full Name</th>
+                            <th class="px-6 py-4">Phone Number</th>
+                            <th class="px-6 py-4">Archdeaconry / Church</th>
+                            <th class="px-6 py-4">Ticket Option</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4 no-print">Receipt Verification</th>
+                            <th class="px-6 py-4 no-print">Action Gateway</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerTableBody" class="divide-y divide-slate-800/60 text-sm font-medium text-slate-300 print:text-black print:divide-slate-200">
+                        <tr id="loadingRow"><td colspan="8" class="text-center py-10 text-slate-500">Establishing handshake with secure database repository...</td></tr>
+                    </tbody>
+                </table>
             </div>
-        </header>
-
-        <main class="max-w-7xl mx-auto px-4 py-8">
-            <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-2xl">
-                <div class="mb-6">
-                    <h2 class="text-lg font-black text-white">Verification Queue & Manifest</h2>
-                    <p class="text-xs text-slate-400">Analyze submitted receipt slips against applicant profiles below to grant credential passes.</p>
-                </div>
-
-                <!-- Table -->
-                <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead>
-                            <tr class="bg-slate-950 text-slate-400 border-b border-slate-800 font-bold uppercase tracking-wider">
-                                <th class="p-4">Full Name / Phone</th>
-                                <th class="p-4">Archdeaconry / Parish</th>
-                                <th class="p-4">Access Tier</th>
-                                <th class="p-4">Proof Attachment</th>
-                                <th class="p-4 text-center">Status Action Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="manifestTable" class="divide-y divide-slate-800/60 text-slate-300">
-                            <!-- Injected dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- POPUP VIEW FOR EXAMINING RECEIPTS INTERNALLY -->
-    <div id="receiptViewerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-950 border border-slate-800 max-w-lg w-full rounded-2xl p-4 flex flex-col items-center">
-            <div class="w-full flex justify-between items-center mb-3">
-                <h4 class="text-xs font-bold uppercase text-slate-400">Uploaded Slip Document Preview</h4>
-                <button onclick="closeReceiptViewer()" class="text-slate-400 hover:text-white font-bold text-sm">✕ Close</button>
-            </div>
-            <img id="modalReceiptTargetImg" src="" alt="Receipt Doc" class="max-h-[70vh] w-full object-contain rounded-lg border border-slate-800 bg-slate-900">
         </div>
     </div>
 
     <script>
-        const MASTER_PASSWORD = 'ogbaru2026';
-
-        function checkGateKey() {
-            if(document.getElementById('gateKey').value === MASTER_PASSWORD) {
-                document.getElementById('passwordGate').classList.add('hidden');
-                document.getElementById('dashboardContent').classList.remove('hidden');
-                loadManifest();
-            } else { alert('❌ Access Denied.'); }
-        }
-
-        async function loadManifest() {
+        async function fetchManifest() {
             try {
                 const response = await fetch('/api/attendees');
-                const attendees = await response.json();
-                const tableBody = document.getElementById('manifestTable');
-                tableBody.innerHTML = '';
+                const data = await response.json();
+                const tbody = document.getElementById('ledgerTableBody');
+                tbody.innerHTML = '';
 
-                if(attendees.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-500 font-medium">Verification queue empty.</td></tr>`;
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-500">No delegate registrations detected inside the database ledger.</td></tr>`;
                     return;
                 }
 
-                attendees.forEach(person => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-800/20 transition-colors";
-                    tr.innerHTML = `
-                        <td class="p-4">
-                            <div class="font-bold text-white text-sm">${person.fullName}</div>
-                            <div class="text-slate-400 text-[11px] mt-0.5">${person.phoneNumber}</div>
-                        </td>
-                        <td class="p-4">
-                            <div>${person.archdeaconry}</div>
-                            <div class="text-slate-400 text-[11px] mt-0.5">${person.homeChurch}</div>
-                        </td>
-                        <td class="p-4 font-semibold text-blue-400">${person.ticketType}</td>
-                        <td class="p-4">
-                            <button onclick="openReceiptViewer('${person.id}')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg border border-slate-700">
-                                🖼️ Open Receipt File
-                            </button>
-                        </td>
-                        <td class="p-4 text-center">
-                            ${person.approved ? 
-                                `<span class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-3 py-2 rounded-xl text-xs block">✓ Payment Confirmed</span>` : 
-                                `<button onclick="approveTransfer('${person.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md shadow-emerald-900/20 transition-all">
-                                    Approve Transfer Key
-                                 </button>`
-                            }
-                        </td>
-                    `;
-                    // Stash image data globally in memory attached to window context for instant recall
-                    window[`receipt_${person.id}`] = person.receiptImage;
-                    tableBody.appendChild(tr);
-                });
-            } catch (err) { console.error(err); }
-        }
+                data.forEach(person => {
+                    const statusBadge = person.approved 
+                        ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-xs font-bold print:text-black print:border-none">✓ Verified</span>` 
+                        : `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-bold print:text-black print:border-none">🕒 Pending</span>`;
 
-        function openReceiptViewer(id) {
-            const base64Data = window[`receipt_${id}`];
-            if(base64Data) {
-                document.getElementById('modalReceiptTargetImg').src = base64Data;
-                document.getElementById('receiptViewerModal').classList.remove('hidden');
+                    const actionButton = person.approved
+                        ? `<button onclick="sendWhatsApp('${person.phoneNumber}', '${person.fullName}', '${person.regNumber}', '${person.ticketType}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-lg text-xs flex items-center justify-center gap-1 transition-all active:scale-95">
+                            💬 Send WhatsApp
+                           </button>`
+                        : `<button onclick="approveDelegate('${person._id}')" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-3 py-2 rounded-lg text-xs transition-all active:scale-95">
+                            ⚡ Verify & Approve
+                           </button>`;
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-900/30 transition-colors print:hover:bg-transparent";
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-bold text-blue-400 print:text-black">${person.regNumber || 'Assigning...'}</td>
+                        <td class="px-6 py-4 text-white font-semibold print:text-black">${person.fullName}</td>
+                        <td class="px-6 py-4">${person.phoneNumber}</td>
+                        <td class="px-6 py-4 text-xs">
+                            <span class="block text-slate-200 font-semibold print:text-black">${person.archdeaconry}</span>
+                            <span class="block text-slate-500 text-[10px] mt-0.5 print:text-slate-700">${person.homeChurch}</span>
+                        </td>
+                        <td class="px-6 py-4 text-xs font-bold ${person.ticketType.includes('Excursion') ? 'text-purple-400' : 'text-slate-400'} print:text-black">
+                            ${person.ticketType}
+                        </td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 no-print">
+                            <a href="${person.receiptImage}" target="_blank" class="text-blue-500 hover:underline text-xs font-bold flex items-center gap-1">🖼️ View Slip</a>
+                        </td>
+                        <td class="px-6 py-4 no-print">${actionButton}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById('ledgerTableBody').innerHTML = `<tr><td colspan="8" class="text-center py-10 text-red-500">Failed to pull operational registry data.</td></tr>`;
             }
         }
 
-        function closeReceiptViewer() { document.getElementById('receiptViewerModal').classList.add('hidden'); }
-
-        async function approveTransfer(id) {
+        async function approveDelegate(id) {
+            if(!confirm("Confirm bank transfer match and approve this delegate ticket?")) return;
             try {
                 const response = await fetch(`/api/approve/${id}`, { method: 'POST' });
-                if(response.ok) {
-                    alert('🚀 Live Confirmation Dispatched!\nPayment verified and status locked down successfully.');
-                    loadManifest();
+                const resData = await response.json();
+                if(resData.success) {
+                    alert("🎉 Delegate status locked as Verified!");
+                    fetchManifest(); // Refresh layout updates immediately
+                    
+                    // Trigger the WhatsApp pipeline right after approval automatically
+                    sendWhatsApp(resData.data.phoneNumber, resData.data.fullName, resData.data.regNumber, resData.data.ticketType);
                 }
-            } catch (err) { alert('Error updating record.'); }
+            } catch (err) {
+                alert("Critical failure updating database status record.");
+            }
         }
+
+        function sendWhatsApp(phone, name, regNo, ticketType) {
+            // Clean phone format (strips spaces or leading zeros if necessary)
+            let formattedPhone = phone.trim();
+            if (formattedPhone.startsWith('0')) {
+                formattedPhone = '234' + formattedPhone.substring(1);
+            }
+            
+            // Construct the tailored message blueprint
+            const message = `Hello *${name}*, your registration for the *Diocese of Ogbaru Anglican Student Conference (ASM 2026)* has been verified and APPROVED! 🎉%0A%0A🎫 *Your Reg Number:* ${regNo}%0A🎟️ *Ticket Package:* ${ticketType}%0A📍 *Venue:* Basilica of St James the Great Cathedral, Atani.%0A%0AKindly hold on to this confirmation ticket details on your arrival day. See you there! ✨`;
+            
+            // Build the free WhatsApp URL pipeline
+            const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
+            
+            // Open WhatsApp in a completely new window/app instance
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Run manifest handshake on dashboard engine start
+        fetchManifest();
     </script>
 </body>
 </html>
