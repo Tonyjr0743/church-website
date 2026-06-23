@@ -66,7 +66,8 @@
     <script>
         async function fetchManifest() {
             try {
-                const response = await fetch('/api/attendees');
+                // 🔐 Attached secure administrative passkey token to unlock data routing
+                const response = await fetch('/api/attendees?key=ogbaru2026');
                 const data = await response.json();
                 const tbody = document.getElementById('ledgerTableBody');
                 tbody.innerHTML = '';
@@ -119,7 +120,8 @@
         async function approveDelegate(id) {
             if(!confirm("Confirm bank transfer match and approve this delegate ticket?")) return;
             try {
-                const response = await fetch(`/api/approve/${id}`, { method: 'POST' });
+                // 🔐 Attached secure administrative passkey token to authorize status rewrite
+                const response = await fetch(`/api/approve/${id}?key=ogbaru2026`, { method: 'POST' });
                 const resData = await response.json();
                 if(resData.success) {
                     alert("🎉 Delegate status locked as Verified!");
@@ -134,19 +136,13 @@
         }
 
         function sendWhatsApp(phone, name, regNo, ticketType) {
-            // Clean phone format (strips spaces or leading zeros if necessary)
             let formattedPhone = phone.trim();
             if (formattedPhone.startsWith('0')) {
                 formattedPhone = '234' + formattedPhone.substring(1);
             }
             
-            // Construct the tailored message blueprint
             const message = `Hello *${name}*, your registration for the *Diocese of Ogbaru Anglican Student Conference (ASM 2026)* has been verified and APPROVED! 🎉%0A%0A🎫 *Your Reg Number:* ${regNo}%0A🎟️ *Ticket Package:* ${ticketType}%0A📍 *Venue:* Basilica of St James the Great Cathedral, Atani.%0A%0AKindly hold on to this confirmation ticket details on your arrival day. See you there! ✨`;
-            
-            // Build the free WhatsApp URL pipeline
             const whatsappUrl = `https://wa.me/${formattedPhone}?text=${message}`;
-            
-            // Open WhatsApp in a completely new window/app instance
             window.open(whatsappUrl, '_blank');
         }
 
